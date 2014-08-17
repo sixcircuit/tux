@@ -48,7 +48,7 @@ then run
 tux <session name>
 ```
 
-If the session doesn't exist, it will be creted as it exists in your config file, and you'll be attached to it.
+If the session doesn't exist, it will be created as it exists in your config file, and you'll be attached to it.
 If it does exist, you'll be attached to it. Maybe emotionally. Definitely from the perspective of your terminal.
 
 Fork, add issues, send pull requests, whatever.

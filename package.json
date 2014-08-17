@@ -1,7 +1,7 @@
 {
     "name": "node-tux",
     "description": "A simple library and command line client for tmux.",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "main":"./lib/index.js",
     "author": {
         "name": "Kendrick Taylor",
