@@ -10,13 +10,18 @@ npm install -g node-tux
 
 
 **Global Installation**
+
 You should be installing "globally" to your home directory without sudo:
 
 Run this command: ```npm config set prefix ~/.npm-packages```
+
 Add this to your .bashrc or similar: ```export PATH=$HOME/.npm-packages/bin:$PATH```
 
-this should do it but currently npm doesn't respect the prefix config. It'll be fixed shortly but versions > 1.4.10 and < 1.4.14 are broken.
-so you have to do this when you install global packages for now: ```npm install -g --prefix=$(npm config get prefix) <package>```
+this should do it but currently npm doesn't respect the prefix config. It'll be fixed shortly, but versions > 1.4.10 and < 1.4.14 are broken.
+
+For now, when you install global packages run: ```npm install -g --prefix=$(npm config get prefix) <package>```
+
+
 
 **Use (it's really easy)**
 
@@ -38,7 +43,7 @@ Write out the sessions you want to be able to create/attach to:
 }
 ```
 
-run 
+then run 
 ```
 tux <session name>
 ```
