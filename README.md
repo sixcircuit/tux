@@ -7,6 +7,7 @@ The file name needs to be .tux.json. Don't forget the "." prefix.
 
 Write out the sessions you want to be able to create/attach to:
 
+```
 {
     "foo" : { // session name
         cwd: "~/" // all your new windows will start here
@@ -17,8 +18,12 @@ Write out the sessions you want to be able to create/attach to:
         ]
     }
 }
+```
 
-run "tux <session name>". 
+run 
+```
+tux <session name>
+```
 
 If the session doesn't exist, it will be creted as it exists in your config file, and you'll be attached to it.
 If it does exist, you'll be attached to it. Maybe emotionally. Definitely from the perspective of your terminal.
