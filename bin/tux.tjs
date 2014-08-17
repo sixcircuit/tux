@@ -45,7 +45,7 @@ function run(){
     }
 
     var session = data[sessionName];
-    if(!session){ exit(_.error("NoConfigSection", "config file section not found: " + sessioName + ". You need a config file section for this to work.")); }
+    if(!session){ exit(_.error("NoConfigSection", "config file section not found: " + sessionName + ". You need a config file section for this to work.")); }
 
     await{ tux.sessions.exists(sessionName, _.plumb(defer(var exists), exit)); }
 
