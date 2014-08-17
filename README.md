@@ -17,9 +17,10 @@ Run this command: ```npm config set prefix ~/.npm-packages```
 
 Add this to your .bashrc or similar: ```export PATH=$HOME/.npm-packages/bin:$PATH```
 
-this should do it but currently npm doesn't respect the prefix config. It'll be fixed shortly, but versions > 1.4.10 and < 1.4.14 are broken.
+this should do it but currently npm doesn't respect the prefix config. 
+It's fixed in the latest versions, but versions greater than 1.4.9 and less than 1.4.20 (I think) are broken.
 
-For now, when you install global packages run: ```npm install -g --prefix=$(npm config get prefix) <package>```
+If you're on a broken version, when you install global packages run: ```npm install -g --prefix=$(npm config get prefix) <package>```
 
 
 
