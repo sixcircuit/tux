@@ -1,0 +1,5 @@
+#!/usr/bin/env node
+// we want to handle exceptions ourselves
+require('tamejs').register({catchExceptions : false});
+require('./tux.tjs').run();
+

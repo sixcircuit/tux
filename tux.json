@@ -1,0 +1,19 @@
+{
+    "foo" : {
+        cwd: "~/"
+        windows: [
+            { cmd: "ls" },
+            { cmd: "vi" }
+            { cmd: "cd /bin"}
+        ]
+    }
+    "bar" : {
+        cwd: "/bin",
+        windows: [
+            { cmd: "cd /lib" },
+            {},
+            { cmd: "vi" }
+        ]
+    }
+}
+

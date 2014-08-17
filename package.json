@@ -1,0 +1,23 @@
+{
+    "name": "node-tux",
+    "description": "A simple library and command line client for tmux.",
+    "version": "0.1.0",
+    "main":"./lib/index.js",
+    "author": {
+        "name": "Kendrick Taylor",
+        "email": "kendrick@circuitsix.com"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/sktaylor/tux.git"
+    },
+    "directories": {
+        "lib": "./lib"
+    },
+    "bin" : { "tux" : "./bin/tux" },
+    "dependencies": {
+          "tamejs" : "0.4.14"
+        , "dry-underscore" : "0.5.0"
+    }
+}
+
