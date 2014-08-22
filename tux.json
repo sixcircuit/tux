@@ -1,12 +1,12 @@
 {
     "foo" : {
-        cwd: "~/"
+        cwd: "~/",
         windows: [
             { cmd: "ls" },
             { cmd: "vi" }
             { cmd: "cd /bin"}
         ]
-    }
+    },
     "bar" : {
         cwd: "/bin",
         windows: [
