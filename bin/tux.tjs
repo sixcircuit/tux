@@ -34,7 +34,7 @@ function run(){
     // await{ _.fs.findInParents(cwd(), ".tux.json", _.plumb(defer(root), callback)); }
 
     var configPath = _.path.home(".tux.json");
-    await{ _.fs.evalFile(configPath, _.plumb(defer(var err, data), exit, [_.ecode.noEnt])); }
+    await{ _.fs.evalFile(configPath, _.plumb(defer(var err, data), exit, [_.error.noent])); }
 
     if(err){ exit(_.error("NoConfig", "File not found: " + configPath + ". You need a config file for this to work.")); }
 
