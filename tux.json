@@ -3,7 +3,7 @@
         cwd: "~/",
         windows: [
             { cmd: "ls" },
-            { cmd: "vi" }
+            { cmd: "vi" },
             { cmd: "cd /bin"}
         ]
     },
