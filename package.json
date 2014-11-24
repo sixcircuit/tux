@@ -16,8 +16,8 @@
     },
     "bin" : { "tux" : "./bin/tux" },
     "dependencies": {
-          "tamejs" : "0.4.14"
-        , "dry-underscore" : "0.6.1"
+          "tamejs" : ""
+        , "dry-underscore" : ""
     }
 }
 
