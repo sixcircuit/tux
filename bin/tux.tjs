@@ -7,7 +7,7 @@ var exit = _.exit
 
 process.on('uncaughtException', exit);
 
-_.measurer.measure("tux", "total time");
+var total_time = _.timer.time("tux", "total time");
 
 var log = _.log;
 var logLevel = "info";
@@ -54,6 +54,13 @@ function run(){
 
     log.debug("about to run session: ", sessionName);
 
+    if(sessionName === "ls"){ 
+        _.each(config, function(session, key){
+            _.stdout(key + ": ", session.cwd || "no cwd");
+        });
+        _.exit(1);
+    }
+
     if(!sessionName){ 
         _.stderr("abort: You must enter a session name.");
         _.stderr("usage: tux <session name>");
@@ -74,8 +81,7 @@ function run(){
         await{ tux.windows.create(sessionName, i+1, cmd.cmd, session.cwd, _.plumb(defer(), exit)); }
         next();
     }, function(){
-        _.measurer.measure("tux", "total time");
-        // _.stderr("total time: ", _.measurer.last("tux", "total time"), "ms");
+        // total_time("total time"); 
         await{ tux.sessions.attach(sessionName, _.plumb(defer(), exit)); }
     });
 }
