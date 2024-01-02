@@ -4,8 +4,8 @@ tux - a tmux library and command line client for node
 
 Please read the section on global installation.
 
-```
-npm install -g node-tux 
+``` bash
+npm install -g node-tux
 ```
 
 **Global Installation**
@@ -32,7 +32,7 @@ The file name needs to be .tux.json. Don't forget the "." prefix.
 
 Write out the sessions you want to be able to create/attach to in one large hash, with the following format (no exports):
 
-```
+``` javascript
 {
     "foo" : { // session name
         cwd: "~/" // all your new windows will start here
@@ -52,7 +52,7 @@ The file name needs to be .tux.js. Don't forget the "." prefix. If you have a .t
 
 Write out the sessions you want to be able to create/attach to:
 
-```
+``` javascript
 function home(){ return("~"); }
 
 exports.config = {
@@ -70,7 +70,7 @@ exports.config = {
 **Use (it's really easy)**
 
 just run
-```
+``` bash
 tux <session name>
 ```
 
