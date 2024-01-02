@@ -1,5 +1,98 @@
 #!/usr/bin/env node
-// we want to handle exceptions ourselves
-require('tamejs').register({catchExceptions : false});
-require('./tux.tjs').run();
 
+"use strict";
+
+const os = require('os');
+const path = require('path');
+const _ = require("../lib/_.js");
+
+const tmux = require("../lib/tmux.js");
+
+function get_config(){
+   const config_path = path.join(os.homedir(), ".tux.js");
+   
+   try{
+      return require(config_path);
+   }catch(e){
+      throw _.error("config_error", "missing config file ~/.tux.js or there was a problem with it: ", e.toString());
+   }
+}
+
+const _cmds = {};
+
+const help = function(exit){
+
+   const str = [
+      `usage: tux [ ${ _.keys(_cmds).join(", ") }, <session_name>]`
+   ];
+
+   _.stdout.line(...str);
+
+   if(_.def(exit)){ _.exit(exit); }
+}
+
+_cmds.help = help;
+
+_cmds.init = function(){
+
+}
+
+_cmds.save = function(){
+
+}
+
+_cmds.ls = function(){
+
+   const config = get_config();
+
+   _.each(config, function(session, key){
+      if(_.is_ary(session)){
+         _.stdout.line(key + ": ", session.join(", "));
+      }else{
+         _.stdout.line(key + ": ", session.cwd || "<no cwd>");
+      }
+   });
+};
+
+_cmds.run = function([ session_name ]){
+   
+   const config = get_config();
+
+   if(!session_name){
+      _.stderr.line("abort: You must enter a session name.");
+      return help(1);
+   }
+
+   if(tmux.sessions.exists({ session_name })){
+      _.stdout.line("session exists: ", session_name);
+      _.stdout.line("attaching.");
+      return tmux.sessions.attach({ session_name });
+   }
+
+   const session = config[session_name];
+
+   if(!session){
+      _.stderr.line(`error: config file section not found: "${ session_name }". you need a config file section for this to work.`);
+      _.exit(1);
+   }
+
+   _.each(session.windows, function(cmd, i){
+      _.stdout.line("creating windows.");
+      tmux.windows.create({ session_name, number: i+1, command: cmd.cmd, working_dir: session.cwd });
+   });
+
+   tmux.sessions.attach({ session_name });
+};
+
+;(function main(){
+
+   const args = process.argv.slice(2);
+
+   const cmd = args.shift();
+
+   if(_.undef(cmd)){ return help(); }
+
+   if(_cmds[cmd]){ return _cmds[cmd](args); }
+   else{ _cmds.run([ cmd ]); }
+
+})();
