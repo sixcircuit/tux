@@ -10,12 +10,27 @@ const tmux = require("../lib/tmux.js");
 
 function get_config(){
    const config_path = path.join(os.homedir(), ".tux.js");
-   
-   try{
-      return require(config_path);
-   }catch(e){
+
+   let config;
+
+   try{ config = require(config_path); }
+   catch(e){
       throw _.error("config_error", "missing config file ~/.tux.js or there was a problem with it: ", e.toString());
    }
+
+   _.each(config, function(session, key){
+      if(_.is_ary(session)){
+         config[key] = _.merge({ tabs: session });
+      }else{
+         config[key] = _.merge(session, {
+            name: key,
+            title: session.title || key,
+            dir: _.path.expand_tilde(session.dir || _.fatal("missing dir for: ", key))
+         });
+      }
+   });
+
+   return(config);
 }
 
 const _cmds = {};
@@ -33,13 +48,27 @@ const help = function(exit){
 
 _cmds.help = help;
 
+_cmds["."] = function(){
+
+};
+
 _cmds.init = function(){
 
-}
+};
 
 _cmds.save = function(){
 
 }
+
+_cmds.lay = _cmds.layout = function([ name ]){
+   tmux.layout({ name });
+};
+
+_cmds.at = function(){
+   console.dir(tmux);
+   const { stdout } = tmux.run("list-sessions");
+   _.stdout.write(stdout);
+};
 
 _cmds.ls = function(){
 
@@ -49,13 +78,13 @@ _cmds.ls = function(){
       if(_.is_ary(session)){
          _.stdout(key + ": ", session.join(", "));
       }else{
-         _.stdout(key + ": ", session.cwd || "<no cwd>");
+         _.stdout(key + ": ", session.dir || "<no cwd>");
       }
    });
 };
 
-_cmds.run = function([ session_name ]){
-   
+_cmds.run = async function([ session_name ]){
+
    const config = get_config();
 
    if(!session_name){
@@ -70,20 +99,15 @@ _cmds.run = function([ session_name ]){
       _.exit(1);
    }
 
-   session = _.merge({ title: session_name }, session, { name: session_name, working_dir: _.expand_tilde(session.cwd) });
-
-   if(tmux.sessions.exists(session)){
+   if(tmux.session.exists(session)){
       _.debug("session exists: ", session.name);
       _.debug("attaching.");
-      return tmux.sessions.attach(session);
+      return tmux.session.attach(session);
    }
 
-   _.each(session.windows, function(win, i){
-      _.debug("creating windows.");
-      tmux.windows.create({ session, window: { command: win.cmd, number: i+1 }});
-   });
+   await tmux.session.create({ session });
 
-   tmux.sessions.attach(session);
+   tmux.session.attach(session);
 };
 
 ;(function main(){

@@ -6,12 +6,15 @@
 
    - support splitting / adjusting windows (basically call the tmux adjust windows script)
 
+   - support array notation in tux sessions to open multiple tabs
+      - use tab -d '' <cmd>
+
+   - also support tux tab <name> to start session in a new iterm tab.
+
    - create a tux init . <name> which will add this directory to the tux.
       - tux init picks the abbreviation. is there a programmatic way to do that? ask chat gpt about the algorithm. it also saves the state. tux save in a tmux session saves the config. https://superuser.com/questions/440015/restore-tmux-session-after-reboot
 
-   - name the tmux window!
-
-   - do tux tab <name> to start it in a new iterm tab.
+   - can you name tmux windows?
 
 = done
    x to set tab title to the project name
