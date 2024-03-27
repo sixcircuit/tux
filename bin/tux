@@ -8,26 +8,45 @@ const _ = require("../lib/_.js");
 
 const tmux = require("../lib/tmux.js");
 
+const _config_path = path.join(os.homedir(), ".tux.js");
+
 function get_config(){
-   const config_path = path.join(os.homedir(), ".tux.js");
 
    let config;
 
-   try{ config = require(config_path); }
+   try{ config = require(_config_path); }
    catch(e){
       throw _.error("config_error", "missing config file ~/.tux.js or there was a problem with it: ", e.toString());
    }
 
+   config = _.merge({}, config);
+
+   const meta = config.meta;
+
+   delete config.meta;
+
    _.each(config, function(session, key){
       if(_.is_ary(session)){
-         config[key] = _.merge({ tabs: session });
+         session = _.merge({ tabs: session });
       }else{
-         config[key] = _.merge(session, {
+         session = _.merge(meta.default, session, {
             name: key,
             title: session.title || key,
-            dir: _.path.expand_tilde(session.dir || _.fatal("missing dir for: ", key))
+            dir: _.path.expand_tilde(session.dir || _.fatal("missing dir for: ", key)),
          });
       }
+      if(session.windows){
+         session.windows = session.windows.map(function(value){
+            if(typeof value === "string"){
+               return({ run: value, layout: true });
+            }else if(Array.isArray(value)){
+               return({ run: value[0], layout: false });
+            }else{
+               return(value);
+            }
+         });
+      }
+      config[key] = session;
    });
 
    return(config);
@@ -48,19 +67,34 @@ const help = function(exit){
 
 _cmds.help = help;
 
-_cmds["."] = function(){
-
+_cmds.config = function(){
+   _.stdout(JSON.stringify(get_config(), null, 3));
 };
 
-_cmds.init = function(){
+_cmds.fzf = function(){
 
+   const { spawn } = require("child_process");
+
+   const fzf = spawn("fzf", [], { stdio: ["pipe", "pipe", process.stderr] });
+
+   let selection = '';
+
+   fzf.stdout.on("data", function(data){ selection += data.toString(); });
+
+   fzf.on("close", function(){
+      selection = selection.trim();
+      if(selection){
+         selection = selection.split(" ")[0].trim();
+         _.debug("selection: ", selection);
+         _cmds.run([ selection ]);
+      }
+   });
+
+   fzf.stdin.write(_ls());
+   fzf.stdin.end();
 };
 
-_cmds.save = function(){
-
-}
-
-_cmds.lay = _cmds.layout = function([ name ]){
+_cmds.layout = function([ name ]){
    tmux.layout({ name });
 };
 
@@ -70,18 +104,82 @@ _cmds.at = function(){
    _.stdout.write(stdout);
 };
 
-_cmds.ls = function(){
+_cmds.edit = function(){
+   let editor = process.env.EDITOR;
+   if(!editor){
+      editor = "vi";
+      _.stderr("WARNING: $EDITOR is not set. using vi.");
+   }
+   _.shell(editor + " " + _config_path);
+};
+
+_cmds.add = function([ dir ]){
+   if(!dir){ dir = "."; }
+   dir = path.resolve(dir);
+   dir = _.path.shorten_tilde(dir);
+
+   const fs = require('fs');
+   const section = [
+      `config.NAME_ME = {`,
+      `   dir: "${dir}",`,
+      `   title: "TITLE ME",`,
+      `   // remove "windows" section to get the default windows.`,
+      `   windows: ["CMD_ONE", "CMD_TWO"]`,
+      `};`
+   ];
+   fs.appendFileSync(_config_path, "\n" + section.join("\n"));
+   _cmds.edit();
+};
+
+function _ls(){
+
+   const config = get_config();
+   const list = [];
+
+   let max_key_len = 0;
+
+   _.each(config, function(session, key){
+      max_key_len = Math.max(key.length, max_key_len);
+   });
+
+   _.each(config, function(session, key){
+      if(session.tabs){
+         list.push(key.padEnd(max_key_len, " ") + ":  [ " + session.tabs.join(", ") + " ]");
+      }else{
+         list.push(key.padEnd(max_key_len, " ") + ":  " + _.path.shorten_tilde(session.dir || ""));
+      }
+   });
+
+   return(list.join("\n"));
+}
+
+_cmds.compinit = function(){
 
    const config = get_config();
 
-   _.each(config, function(session, key){
-      if(_.is_ary(session)){
-         _.stdout(key + ": ", session.join(", "));
-      }else{
-         _.stdout(key + ": ", session.dir || "<no cwd>");
-      }
-   });
+   const list = [
+      'fzf:pick a session to run with fzf',
+      'add:add a new item to tux',
+      'edit:edit tmux config',
+      'ls:list possible sessions',
+      'run:run a session',
+      'config:print the expanded tmux config',
+      'at:list attached sessions',
+      'help:print help',
+   ];
+
+   // _.each(config, function(session, key){
+   //    if(session.tabs){
+   //       list.push(key + ":[ " + session.tabs.join(", ") + " ]");
+   //    }else{
+   //       list.push(key + ":" + _.path.shorten_tilde(session.dir || ""));
+   //    }
+   // });
+
+   _.stdout(list.join("\n"));
 };
+
+_cmds.ls = function(){ _.stdout(_ls()); };
 
 _cmds.run = async function([ session_name ]){
 
@@ -99,15 +197,24 @@ _cmds.run = async function([ session_name ]){
       _.exit(1);
    }
 
-   if(tmux.session.exists(session)){
-      _.debug("session exists: ", session.name);
-      _.debug("attaching.");
-      return tmux.session.attach(session);
+   if(session.tabs){
+      for(let i = 0; i < session.tabs.length; i++){
+         const tux_session_name = session.tabs[i];
+         _.spawn("tab -d '' tux " + tux_session_name);
+         await _.timeout(2_000);
+      }
+   }else{
+
+      if(tmux.session.exists(session)){
+         _.debug("session exists: ", session.name);
+         _.debug("attaching.");
+         return tmux.session.attach(session);
+      }
+
+      await tmux.session.create({ session });
+
+      tmux.session.attach(session);
    }
-
-   await tmux.session.create({ session });
-
-   tmux.session.attach(session);
 };
 
 ;(function main(){
@@ -116,7 +223,7 @@ _cmds.run = async function([ session_name ]){
 
    const cmd = args.shift();
 
-   if(_.undef(cmd)){ return help(); }
+   if(_.undef(cmd)){ return _cmds.fzf(); }
 
    if(_cmds[cmd]){ return _cmds[cmd](args); }
    else{ _cmds.run([ cmd ]); }

@@ -8,7 +8,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "git://github.com/sktaylor/tux.git"
+        "url": "git://github.com/sixcircuit/tux.git"
     },
     "directories": {
         "lib": "./lib"

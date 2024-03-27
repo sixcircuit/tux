@@ -1,22 +1,22 @@
 = todo
 
-   ? use paths as the tmux name - and have aliases
-      - support tux move Projects/dry/dry-wip/dry-underscore projects/dry/baseline
-      - support tux move du projects/dry/baseline
-
-   - support splitting / adjusting windows (basically call the tmux adjust windows script)
-
-   - support array notation in tux sessions to open multiple tabs
-      - use tab -d '' <cmd>
-
-   - also support tux tab <name> to start session in a new iterm tab.
-
-   - create a tux init . <name> which will add this directory to the tux.
-      - tux init picks the abbreviation. is there a programmatic way to do that? ask chat gpt about the algorithm. it also saves the state. tux save in a tmux session saves the config. https://superuser.com/questions/440015/restore-tmux-session-after-reboot
-
-   - can you name tmux windows?
-
 = done
    x to set tab title to the project name
      x echo -ne "\e]1;this is the title\a"
+
+   x support splitting / adjusting windows (basically call the tmux adjust windows script)
+
+   x support array notation in tux sessions to open multiple tabs
+      x use tab -d '' <cmd>
+
+   / also support tux tab <name> to start session in a new iterm tab.
+
+   x create a tux init . <name> which will add this directory to the tux.
+      / tux init picks the abbreviation. is there a programmatic way to do that? ask chat gpt about the algorithm. it also saves the state. tux save in a tmux session saves the config. https://superuser.com/questions/440015/restore-tmux-session-after-reboot
+
+   x can you name tmux windows
+
+   / use paths as the tmux name - and have aliases
+      / support tux move Projects/dry/dry-wip/dry-underscore projects/dry/baseline
+      / support tux move du projects/dry/baseline
 
