@@ -10,8 +10,7 @@ const tmux = require("../lib/tmux.js");
 
 const _config_path = path.join(os.homedir(), ".tux.js");
 
-function get_config(){
-
+function get_meta(){
    let config;
 
    try{ config = require(_config_path); }
@@ -19,20 +18,38 @@ function get_config(){
       throw _.error("config_error", "missing config file ~/.tux.js or there was a problem with it: ", e.toString());
    }
 
-   config = _.merge({}, config);
+   return(config.meta || {});
+}
 
-   const meta = config.meta;
+function get_config(){
 
-   delete config.meta;
+   let _config;
 
-   _.each(config, function(session, key){
+   try{ _config = require(_config_path); }
+   catch(e){
+      throw _.error("config_error", "missing config file ~/.tux.js or there was a problem with it: ", e.toString());
+   }
+
+   const meta = _config.meta;
+
+   const config = {};
+
+   _.each(_config, function(session, name){
+      if(name === "meta"){ return; }
+
+      const key = name.replace(/[./\\-]/g, "_");
+
+      if(!key.match(/^[A-Za-z0-9_]*$/)){ _.fatal(`session keys can only contain letters, numbers, and "_", ".", "-", "\\", "/"`); }
+
+      if(config[key]){ _.fatal(`session name: "${name}" already exists for key: "${key}". you probably have a collision with the characters ".", "-", "/", "\\", which we convert to "_" for compatibility with tmux.`); }
+
       if(_.is_ary(session)){
-         session = _.merge({ tabs: session });
+         session = _.merge({ name, key, tabs: session });
       }else{
          session = _.merge(meta.default, session, {
-            name: key,
-            title: session.title || key,
-            dir: _.path.expand_tilde(session.dir || _.fatal("missing dir for: ", key)),
+            name, key,
+            title: session.title || name,
+            dir: _.path.expand_tilde(session.dir || _.fatal("missing dir for: ", name)),
          });
       }
       if(session.windows){
@@ -46,7 +63,7 @@ function get_config(){
             }
          });
       }
-      config[key] = session;
+      config[name] = session;
    });
 
    return(config);
@@ -85,7 +102,7 @@ _cmds.fzf = function(){
       selection = selection.trim();
       if(selection){
          selection = selection.split(" ")[0].trim();
-         _.debug("selection: ", selection);
+         _.debug(`selection: "`, selection, `"`);
          _cmds.run([ selection ]);
       }
    });
@@ -94,41 +111,65 @@ _cmds.fzf = function(){
    fzf.stdin.end();
 };
 
-_cmds.layout = function([ name ]){
-   tmux.layout({ name });
+_cmds.layout = async function(){
+   // const { stdout: target } = tmux.run("display-message", ["-p", `'#S:#I.#P'`]);
+   const { stdout: target } = tmux.run("display-message", ["-p", `'#S:#I'`]);
+   // _.stdout("target: ", target);
+   await tmux.layout({ target });
 };
 
-_cmds.at = function(){
-   console.dir(tmux);
-   const { stdout } = tmux.run("list-sessions");
-   _.stdout.write(stdout);
+_cmds.at = function([ session_name ]){
+   if(session_name){
+      _.shell(`tmux attach-session -t=${ session_name }`);
+   }else{
+      const { stdout } = tmux.run("list-sessions");
+      _.stdout.write(stdout);
+   }
 };
 
-_cmds.edit = function(){
+_cmds.edit = function([jump_search]){
    let editor = process.env.EDITOR;
    if(!editor){
       editor = "vi";
       _.stderr("WARNING: $EDITOR is not set. using vi.");
    }
-   _.shell(editor + " " + _config_path);
+   if(jump_search){
+      _.shell(editor + ` +/${jump_search} ` + _config_path);
+   }else{
+      _.shell(editor + " " + _config_path);
+   }
 };
 
-_cmds.add = function([ dir ]){
-   if(!dir){ dir = "."; }
-   dir = path.resolve(dir);
-   dir = _.path.shorten_tilde(dir);
+_cmds.add = function([ path ]){
+   const meta = get_meta();
+
+   if(!path){ path = "."; }
+   path = _.path.resolve(path);
+   path = _.path.shorten_tilde(path);
+
+   const name = _.path.basename(path).replace(/[^a-zA-Z0-9]/g, '_');
+
+   // we stringify so that fixup can return a raw string.
+   if(meta.fixup){
+      ({ path } = meta.fixup({ _, path }));
+      if(!path){ _.fatal(`meta.fixup function made the path empty: ""`); }
+   }else{
+      path = JSON.stringify(path);
+   }
 
    const fs = require('fs');
    const section = [
-      `config.NAME_ME = {`,
-      `   dir: "${dir}",`,
+      `config.${name} = {`,
+      `   dir: ${path},`,
+      `   // remove "title" to get the key as the default name.`,
       `   title: "TITLE ME",`,
       `   // remove "windows" section to get the default windows.`,
       `   windows: ["CMD_ONE", "CMD_TWO"]`,
       `};`
    ];
-   fs.appendFileSync(_config_path, "\n" + section.join("\n"));
-   _cmds.edit();
+
+   _.fs.insert_lines_after(_config_path, "0d3bf85108d6126c0a9ad9953be0832ca8aeff78", "\n" + section.join("\n"))
+   _cmds.edit([name]);
 };
 
 function _ls(){
@@ -141,6 +182,8 @@ function _ls(){
    _.each(config, function(session, key){
       max_key_len = Math.max(key.length, max_key_len);
    });
+
+   max_key_len += 1;
 
    _.each(config, function(session, key){
       if(session.tabs){
@@ -164,7 +207,8 @@ _cmds.compinit = function(){
       'ls:list possible sessions',
       'run:run a session',
       'config:print the expanded tmux config',
-      'at:list attached sessions',
+      'at:list (or attach) to tmux sessions',
+      'layout:list attached sessions',
       'help:print help',
    ];
 
@@ -204,6 +248,8 @@ _cmds.run = async function([ session_name ]){
          await _.timeout(2_000);
       }
    }else{
+
+      console.dir(session);
 
       if(tmux.session.exists(session)){
          _.debug("session exists: ", session.name);
