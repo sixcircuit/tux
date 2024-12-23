@@ -244,7 +244,7 @@ _cmds.run = async function([ session_name ]){
    if(session.tabs){
       for(let i = 0; i < session.tabs.length; i++){
          const tux_session_name = session.tabs[i];
-         _.spawn("tab -d '' tux " + tux_session_name);
+         _.spawn("tab -d '' " + __dirname + "/tux " + tux_session_name);
          await _.timeout(2_000);
       }
    }else{
